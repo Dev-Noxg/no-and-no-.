@@ -82,6 +82,15 @@ export default [
         if (g.tries <= 0) { games.delete(jid); return reply(`❌ خلصت المحاولات. الرقم كان ${g.answer}`); }
         return reply(`${n < g.answer ? '⬆️ الرقم أكبر' : '⬇️ الرقم أصغر'}\nباقي ${g.tries} محاولات`);
       }
+      if (g.type === 'math') {
+        const n = parseInt(text);
+        if (n === g.answer) {
+          games.delete(jid);
+          const r = 100; u.money += r; save();
+          return reply(`🧠 عبقري يا @${numOf(sender)}! الإجابة صحيحة\n💰 +${r} 🪙`, [sender]);
+        }
+        return reply('❌ إجابة خطأ، حاول تاني.');
+      }
       if (g.answers.some(a => normAr(a) === normAr(text))) {
         games.delete(jid);
         const r = randInt(60, 120); u.money += r; save();
@@ -104,6 +113,37 @@ export default [
 
   { name: 'نكتة', aliases: ['joke'], desc: 'نكتة عشوائية',
     async run({ reply }) { reply(rand(JOKES)); } },
+
+  // 🚀 الألعاب الجديدة المضافة فوق كودك الأصلي تماماً:
+  {
+    name: 'رياضيات',
+    aliases: ['math', 'حساب'],
+    desc: 'لعبة مسألة حسابية سريعة لجني الأرباح',
+    async run({ jid, reply }) {
+      const num1 = randInt(5, 50);
+      const num2 = randInt(2, 20);
+      const ops = ['+', '-', '*'];
+      const op = rand(ops);
+      let ans;
+      if (op === '+') ans = num1 + num2;
+      else if (op === '-') ans = num1 - num2;
+      else ans = num1 * num2;
+
+      start(jid, { type: 'math', answer: ans });
+      reply(`🔢 *تحدي الرياضيات السريع*\n\nكم ناتج: *${num1} ${op} ${num2}* = ؟\n\nاكتب: /جاوب <الناتج>`);
+    }
+  },
+
+  {
+    name: 'سرعة',
+    aliases: ['speed', 'تحدي_السرعة'],
+    desc: 'أسرع شخص يكتب الكلمة يكسب جائزة مالية',
+    async run({ reply }) {
+      const fastWords = ['برمجة', 'سايبر', 'تيتانيوم', 'صاروخ', 'ذكاء', 'إمبراطورية'];
+      const w = rand(fastWords);
+      reply(`⚡ أسرع واحد يكتب الكلمة دي في الجروب يكسب:\n\n*${w}*`);
+    }
+  },
 
   { name: 'حظ', aliases: ['luck'], desc: 'نسبة حظك النهاردة',
     async run({ sender, reply }) {
