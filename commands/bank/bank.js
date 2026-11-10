@@ -14,7 +14,6 @@ const FISH = ['🐟 سمكة بلطي', '🐠 سمكة ملونة', '🦐 جمب
 const ORES = ['🪨 حجر', '🥉 نحاس', '🥈 فضة', '🥇 دهب'];
 const SLOTS = ['🍒', '🍋', '🍇', '🔔', '💎', '7️⃣'];
 
-// يحوّل "الكل"/رقم لمبلغ صالح
 function amt(str, max) {
   if (['الكل', 'all'].includes(str)) return max;
   const n = parseInt(str);
@@ -59,6 +58,35 @@ export default [
       const left = cooldown(u, 'mine', 2700000); if (left) return wait(reply, left);
       let r = randInt(40, 250); if (u.inv['معول'] > 0) r *= 2;
       u.money += r; save(); reply(`⛏️ لقيت ${rand(ORES)} وبعته بـ *${money(r)}*${u.inv['معول'] > 0 ? ' (معولك ضاعف الربح!)' : ''}`);
+    } },
+
+  { name: 'استثمار', aliases: ['invest'], desc: 'استثمر جزء من أموالك في الأسواق',
+    async run({ u, args, reply }) {
+      const n = amt(args[0], u.money);
+      if (!n) return reply('اكتب المبلغ للاستثمار. مثال: /استثمار 300');
+      if (n > u.money) return reply('❌ معاكش المبلغ ده في المحفظة.');
+      u.money -= n;
+      const profit = Math.random() > 0.45;
+      const mult = profit ? (1 + Math.random() * 1.2) : 0;
+      const finalAmt = Math.floor(n * mult);
+      u.money += finalAmt; save();
+      if (profit) {
+        reply(`📈 نجح الاستثمار وجاب أرباح! ربحت وعاد إليك *${money(finalAmt)}* 🪙`);
+      } else {
+        reply(`📉 خسر السوق استثمارك وهبطت الأسهم، خسرت مبلغ الاستثمار (${money(n)}).`);
+      }
+    } },
+
+  { name: 'تسول', aliases: ['beg'], desc: 'اطلب مساعدة مالية من المارة (كل 15 دقيقة)',
+    async run({ u, reply }) {
+      const left = cooldown(u, 'beg', 900000); if (left) return wait(reply, left);
+      if (Math.random() > 0.3) {
+        const r = randInt(10, 70);
+        u.money += r; save();
+        reply(`🤲 شخص طيب اعطاك صدقة بقيمة *+${money(r)}* 🪙`);
+      } else {
+        reply(`🚶 محدش عبرك ومحدش رضي يديك حاجة!`);
+      }
     } },
 
   { name: 'ايداع', aliases: ['deposit', 'dep'], desc: 'ايداع فلوس في البنك: /ايداع 500 أو الكل',
@@ -137,7 +165,7 @@ export default [
 
   { name: 'متجر', aliases: ['shop', 'store'], desc: 'عرض المتجر',
     async run({ reply }) {
-      reply('🏪 *المتجر*\n\n' + Object.entries(ITEMS).map(([n, i]) => `${i.emoji} *${n}* — ${money(i.price)}\n   ${i.desc}`).join('\n') + '\n\nللشراء: /شراء <الاسم> [العدد]');
+      reply('🏪 *المتجر*\n\n' + Object.entries(ITEMS).map(([n, i]) => `${i.emoji} *${n}* — ${money(i.price)}\n    ${i.desc}`).join('\n') + '\n\nللشراء: /شراء <الاسم> [العدد]');
     } },
 
   { name: 'شراء', aliases: ['buy'], desc: 'شراء غرض: /شراء صنارة',
