@@ -8,13 +8,11 @@ const ITEMS = {
   'درع': { price: 500, emoji: '🛡️', desc: 'يحميك من سرقة واحدة' },
   'ماسة': { price: 2000, emoji: '💎', desc: 'للتجميع والفخر' },
   'بيت': { price: 10000, emoji: '🏠', desc: 'للتجميع والفخر' },
-  'سيف': { price: 1500, emoji: '⚔️', desc: 'للدفاع والمغامرة القوية' },
-  'خريطة_كنز': { price: 3500, emoji: '🗺️', desc: 'تفتح لك مغامرات سرية مضاعفة الأرباح' },
-  'خاتم_ملكي': { price: 8000, emoji: '💍', desc: 'دليل الفخامة والثراء السريع' }
+  'خاتم_ملكي': { price: 15000, emoji: '👑', desc: 'رتبة ملكية تفاعلية' }
 };
-const JOBS = ['مبرمج', 'سواق تاكسي', 'نجار', 'مصمم', 'طباخ', 'مدرس', 'ميكانيكي', 'كاتب', 'مهندس أمن سيبراني', 'طيار', 'طبيب', 'محامي'];
-const FISH = ['🐟 سمكة بلطي', '🐠 سمكة ملونة', '🦐 جمبري', '🦑 حبّار', '🐡 سمكة منتفخة', '🦈 سمكة قرش نادرة', '🐋 حوت أزرق'];
-const ORES = ['🪨 حجر', '🥉 نحاس', '🥈 فضة', '🥇 دهب', '💎 الماس نقي', '🪙 يورانيوم خام'];
+const JOBS = ['مبرمج', 'سواق تاكسي', 'نجار', 'مصمم', 'طباخ', 'مدرس', 'ميكانيكي', 'كاتب', 'محلل أمني'];
+const FISH = ['🐟 سمكة بلطي', '🐠 سمكة ملونة', '🦐 جمبري', '🦑 حبّار', '🐡 سمكة منتفخة', '🦈 قرش نادر'];
+const ORES = ['🪨 حجر', '🥉 نحاس', '🥈 فضة', '🥇 دهب', '💎 الماس خام'];
 const SLOTS = ['🍒', '🍋', '🍇', '🔔', '💎', '7️⃣'];
 
 function amt(str, max) {
@@ -25,204 +23,150 @@ function amt(str, max) {
 const wait = (reply, ms) => reply(`⏳ استنى ${fmtDur(ms)} قبل ما تكرر الأمر ده.`);
 
 export default [
-  { name: 'رصيد', aliases: ['balance', 'bal', 'فلوسي'], desc: 'رصيدك في المحفظة والبنك',
+  { name: 'رصيد', aliases: ['balance', 'bal', 'فلوسي'], desc: 'رصيدك في المحفظة والبنك ورتبة الـ VIP',
     async run({ u, target, reply }) {
       const x = target ? user(target) : u;
-      reply(`💳 *الرصيد*\n\n👛 المحفظة: ${money(x.money)}\n🏦 البنك: ${money(x.bank)}\n💰 الإجمالي: ${money(x.money + x.bank)}`);
+      const total = x.money + x.bank;
+      let vip = 'عضو عشوائي 👤';
+      if (total >= 50000) vip = 'أسطوري ذهبي 👑';
+      else if (total >= 25000) vip = 'نخبة فضية 🥈';
+      else if (total >= 10000) vip = 'عضو برونزي 🥉';
+
+      reply(`💳 *الرصيد والرتبة*\n\n🎖️ الرتبة: ${vip}\n👛 المحفظة: ${money(x.money)}\n🏦 البنك: ${money(x.bank)}\n💰 الإجمالي: ${money(total)}`);
     } },
 
   { name: 'يومي', aliases: ['daily'], desc: 'المكافأة اليومية',
     async run({ u, reply }) {
       const left = cooldown(u, 'daily', 86400000); if (left) return wait(reply, left);
-      const r = randInt(200, 500); u.money += r; save(); reply(`🎁 مكافأتك اليومية: *+${money(r)}*\n👛 رصيدك: ${money(u.money)}`);
+      const r = randInt(300, 700); u.money += r; save(); reply(`🎁 مكافأتك اليومية: *+${money(r)}*\n👛 رصيدك: ${money(u.money)}`);
     } },
 
   { name: 'اسبوعي', aliases: ['weekly'], desc: 'المكافأة الأسبوعية',
     async run({ u, reply }) {
       const left = cooldown(u, 'weekly', 7 * 86400000); if (left) return wait(reply, left);
-      const r = randInt(1500, 3000); u.money += r; save(); reply(`🎁 مكافأتك الأسبوعية: *+${money(r)}*`);
+      const r = randInt(2000, 5000); u.money += r; save(); reply(`🎁 مكافأتك الأسبوعية: *+${money(r)}*`);
     } },
 
   { name: 'عمل', aliases: ['work'], desc: 'اشتغل واكسب فلوس (كل ساعة)',
     async run({ u, reply }) {
       const left = cooldown(u, 'work', 3600000); if (left) return wait(reply, left);
-      const r = randInt(50, 200); u.money += r; save(); reply(`👷 اشتغلت *${rand(JOBS)}* وكسبت *${money(r)}*`);
+      const r = randInt(70, 250); u.money += r; save(); reply(`👷 اشتغلت *${rand(JOBS)}* وكسبت *${money(r)}*`);
     } },
 
   { name: 'صيد', aliases: ['fish'], desc: 'اصطاد سمك (كل 30 دقيقة)',
     async run({ u, reply }) {
       const left = cooldown(u, 'fish', 1800000); if (left) return wait(reply, left);
-      let r = randInt(20, 150); if (u.inv['صنارة'] > 0) r *= 2;
-      u.money += r; save(); reply(`🎣 صدت ${rand(FISH)} وبعتها بـ *${money(r)}*${u.inv['صنارة'] > 0 ? ' (صنارتك ضاعفت الربح!)' : ''}`);
+      let r = randInt(30, 180); if (u.inv['صنارة'] > 0) r *= 2;
+      u.money += r; save(); reply(`🎣 صدت ${rand(FISH)} وبعتها بـ *${money(r)}*${u.inv['صنارة'] > 0 ? ' (الصنارة ضاعفت الأرباح!)' : ''}`);
     } },
 
   { name: 'تعدين', aliases: ['mine'], desc: 'نقّب عن معادن (كل 45 دقيقة)',
     async run({ u, reply }) {
       const left = cooldown(u, 'mine', 2700000); if (left) return wait(reply, left);
-      let r = randInt(40, 250); if (u.inv['معول'] > 0) r *= 2;
-      u.money += r; save(); reply(`⛏️ لقيت ${rand(ORES)} وبعته بـ *${money(r)}*${u.inv['معول'] > 0 ? ' (معولك ضاعف الربح!)' : ''}`);
+      let r = randInt(50, 300); if (u.inv['معول'] > 0) r *= 2;
+      u.money += r; save(); reply(`⛏️ لقيت ${rand(ORES)} وبعته بـ *${money(r)}*${u.inv['معول'] > 0 ? ' (المعول ضاعف الأرباح!)' : ''}`);
     } },
 
-  // 🌟 أوامر إضافية عميقة في البنك والاقتصاد (أكثر من 20 أمر جديد ومطور):
-  { name: 'استثمار', aliases: ['invest'], desc: 'استثمار أموالك في الأسواق المالية',
+  // 🌟 تطويرات البنك الجديدة المقترحة والمبتكرة:
+  { name: 'استثمار', aliases: ['invest'], desc: 'حط فلوس وتستناها فترة، وترجعلك بربح أو خسارة: /استثمار 500',
     async run({ u, args, reply }) {
       const n = amt(args[0], u.money);
-      if (!n) return reply('اكتب المبلغ للاستثمار. مثال: /استثمار 300');
-      if (n > u.money) return reply('❌ معاكش المبلغ ده في المحفظة.');
+      if (!n) return reply('⚠️ اكتب المبلغ المراد استثماره.\nمثال: /استثمار 500');
+      if (n > u.money) return reply('❌ معاكش المبلغ ده في المحفظة للاستثمار.');
       u.money -= n;
-      const profit = Math.random() > 0.4;
-      const mult = profit ? (1 + Math.random() * 1.5) : 0;
-      const finalAmt = Math.floor(n * mult);
-      u.money += finalAmt; save();
-      if (profit) reply(`📈 نجح الاستثمار وجاب أرباح ضخمة! عاد إليك *${money(finalAmt)}* 🪙`);
-      else reply(`📉 انهيار في السوق! خسرت مبلغ الاستثمار بالكامل (${money(n)}).`);
-    } },
-
-  { name: 'تسول', aliases: ['beg'], desc: 'اطلب مساعدة مالية من المارة (كل 15 دقيقة)',
-    async run({ u, reply }) {
-      const left = cooldown(u, 'beg', 900000); if (left) return wait(reply, left);
-      if (Math.random() > 0.3) {
-        const r = randInt(20, 100); u.money += r; save();
-        reply(`🤲 شخص طيب أعطاك صدقة بقيمة *+${money(r)}* 🪙`);
+      const profit = Math.random() > 0.4; // نسبة نجاح 60%
+      const multiplier = profit ? (1 + Math.random() * 1.5) : 0;
+      const finalVal = Math.floor(n * multiplier);
+      u.bank += finalVal; save();
+      if (profit) {
+        reply(`📈 *نجح الاستثمار بالأسواق!* عاد إلى حسابك البنكي مبلغ وقدره *${money(finalVal)}* 🪙 بربح ممتاز!`);
       } else {
-        reply(`🚶 محدش عبرك ومحدش رضي يديك حاجة اليوم!`);
+        reply(`📉 *تعثر الاستثمار وهبطت الأسواق!* للأسف خسرت مبلغ الاستثمار (${money(n)}).`);
       }
     } },
 
-  { name: 'مغامرة_كبرى', aliases: ['adventure', 'مغامرة'], desc: 'انطلق في مغامرة محفوفة بالمخاطر للبحث عن كنز',
-    async run({ u, reply }) {
-      const left = cooldown(u, 'adventure', 1800000); if (left) return wait(reply, left);
-      if (u.money < 150) return reply('❌ تحتاج إلى 150 🪙 على الأقل لبدء المغامرة.');
-      u.money -= 150;
-      const win = Math.random() > 0.45;
-      const prize = randInt(400, 1200);
-      if (win) {
-        u.money += prize; save();
-        reply(`⚔️ خضت معركة شرسة في الكهف المظلم وانتصرت! عثرت على كنز بقيمة *+${money(prize)}* 🪙`);
-      } else {
-        save();
-        reply(`💀 واجهتك وحوش ضارية وهزمتك في المغامرة، خسرت رسوم الرحلة (150 🪙).`);
-      }
+  { name: 'قرض', aliases: ['loan'], desc: 'اقترض فلوس من البنك: /قرض 2000',
+    async run({ u, args, reply }) {
+      if (u.loan && u.loan > 0) return reply(`⚠️ لديك قرض قديم بقيمة *${money(u.loan)}* يجب تسديده أولاً عبر أمر \`/سداد_قرض\`.`);
+      const n = amt(args[0], 5000);
+      if (!n || n > 5000) return reply('⚠️ الحد الأقصى للقرض هو 5000 🪙.\nمثال: /قرض 2000');
+      u.loan = Math.floor(n * 1.25); // فائدة 25%
+      u.bank += n; save();
+      reply(`🏛️ *تمت الموافقة على القرض!* تم إضافة *${money(n)}* لحسابك البنكي.\n⚠️ إجمالي المبلغ الواجب سداده مع الفائدة هو: *${money(u.loan)}* 🪙.`);
     } },
 
-  { name: 'قرض', aliases: ['loan'], desc: 'اطلب قرضاً سريعاً من البنك المركزي',
+  { name: 'سداد_قرض', aliases: ['payloan'], desc: 'سداد مبلغ القرض للبنك',
     async run({ u, reply }) {
-      const left = cooldown(u, 'loan', 86400000); if (left) return wait(reply, left);
-      const loanAmt = 2000;
-      u.bank += loanAmt; save();
-      reply(`🏛️ وافق البنك المركزي على منحك قرضاً بقيمة *${money(loanAmt)}* 🪙 (يتم سحبه لاحقاً تلقائياً).`);
+      if (!u.loan || u.loan <= 0) return reply('🎉 ليس عليك أي ديون أو قروض حالياً للبنك!');
+      if (u.money < u.loan) return reply(`❌ محفظتك لا تحتوي على قيمة السداد المطلوبة (*${money(u.loan)}* 🪙).`);
+      u.money -= u.loan;
+      const cleared = u.loan;
+      u.loan = 0; save();
+      reply(`✅ *تم سداد القرض بالكامل!* خصم مبلغ *${money(cleared)}* بنجاح، وسجلنا مبروك نظيف تماماً.`);
     } },
 
-  { name: 'سرقة_بنك', aliases: ['heist'], desc: 'عملية سطو مسلح على البنك (مخاطرة عالية)',
-    async run({ u, reply }) {
-      const left = cooldown(u, 'heist', 7200000); if (left) return wait(reply, left);
-      if (u.money < 300) return reply('❌ تحتاج 300 🪙 لتجهيز معدات السطو.');
-      u.money -= 300;
-      if (Math.random() < 0.25) {
-        const loot = randInt(3000, 8000);
-        u.bank += loot; save();
-        reply(`🚨 نجحت عملية السطو بذكاء خيالي! سرقت خزنة البنك وأودعت *${money(loot)}* 🪙 في حسابك!`);
-      } else {
-        const fine = randInt(500, 1500);
-        u.money = Math.max(0, u.money - fine); save();
-        reply(`🚔 فشلت العملية وقبضت عليك الشرطة! غرامة فورية قدرها *${money(fine)}* 🪙.`);
-      }
+  { name: 'مزاد', aliases: ['auction'], desc: 'المزايدة على غرض نادر أو لقب الأسبوع',
+    async run({ reply }) {
+      reply(`🎯 *مزاد البنك المركزي الحصري*\n\nالأرض المعروضة للمزاد اليوم: **غلاف اللقب الملكي الذهبي 👑**\nالسعر الابتدائي للمزايدة: *5000* 🪙\n\nللمزايدة اكتب:\n\`/زايد [المبلغ]\``);
     } },
 
-  { name: 'مكافأة_تنشيطية', aliases: ['bonus'], desc: 'مكافأة عشوائية سريعة',
-    async run({ u, reply }) {
-      const left = cooldown(u, 'bonus', 10800000); if (left) return wait(reply, left);
-      const b = randInt(100, 400); u.money += b; save();
-      reply(`🎯 حصلت على مكافأة تنشيطية بقيمة *+${money(b)}* 🪙!`);
+  { name: 'زايد', aliases: ['bid'], desc: 'المزايدة بمبلغ في المزاد النشط',
+    async run({ u, args, reply }) {
+      const bidAmt = amt(args[0], u.money);
+      if (!bidAmt || bidAmt < 5000) return reply('⚠️ أقل مبلغ للمزايدة هو 5000 🪙.\nمثال: /زايد 6000');
+      if (bidAmt > u.money) return reply('❌ لا تملك هذا المبلغ في محفظتك للمزايدة.');
+      reply(`🔥 قام @${numOf(this?.sender || 'عضو')} بالمزايدة بمبلغ ضخم قدره *${money(bidAmt)}* 🪙! من يزيد؟`);
     } },
 
-  { name: 'يانصيب', aliases: ['lottery'], desc: 'اشتري تذكرة يانصيب واربح الجوائز الكبرى',
+  { name: 'الرهان_الجماعي', aliases: ['groupbet'], desc: 'رهان جماعي لكل الجروب يشارك فيه الأعضاء',
+    async run({ reply }) {
+      reply(`🎲 *تحدي الرهان الجماعي*\n\nشارك في الرهان المفتوح الآن بـ 500 🪙، والفايز العشوائي يحسد الحصيلة بالكامل!\nللمشاركة اكتب: \`/شارك_رهان 500\``);
+    } },
+
+  { name: 'شارك_رهان', aliases: ['joinbet'], desc: 'المشاركة في الرهان الجماعي القائم',
+    async run({ u, args, reply }) {
+      const stake = amt(args[0], u.money);
+      if (!stake || stake < 100) return reply('⚠️ أدخل مبلغاً صحيحاً للمشاركة (أقل مبلغ 100).');
+      if (stake > u.money) return reply('❌ رصيدك لا يكفي للمشاركة.');
+      u.money -= stake; save();
+      reply(`✅ تم تسجيل مشاركتك بنجاح في الرهان الجماعي بمبلغ *${money(stake)}* 🪙! انتظر إعلان النتيجة.`);
+    } },
+
+  { name: 'صندوق_حظ', aliases: ['mysterybox'], desc: 'افتح صندوق حظ عشوائي مقابل 300 🪙',
     async run({ u, reply }) {
-      const cost = 200;
-      if (u.money < cost) return reply(`❌ تذكرة اليانصيب تكلف ${money(cost)} 🪙.`);
+      const cost = 300;
+      if (u.money < cost) return reply(`❌ فتح الصندوق يحتاج إلى ${money(cost)} 🪙 في المحفظة.`);
       u.money -= cost;
-      const roll = Math.random();
-      if (roll < 0.15) {
-        const win = 5000; u.money += win; save();
-        reply(`🎟️ ربحت الجائزة الكبرى في اليانصيب! مبروك *+${money(win)}* 🪙🎉`);
-      } else if (roll < 0.45) {
-        const win = 400; u.money += win; save();
-        reply(`🎟️ ربحت جائزة متوسطة بقيمة *+${money(win)}* 🪙.`);
+      const win = Math.random();
+      if (win < 0.3) {
+        const prize = 1500; u.money += prize; save();
+        reply(`🎁 *مفاجأة كبرى!* فتحت الصندوق ووجدت بداخله كنزاً ثميناً بقيمة *+${money(prize)}* 🪙!`);
+      } else if (win < 0.7) {
+        const prize = 400; u.money += prize; save();
+        reply(`📦 فتحت الصندوق وربحت جائزة متوسطة بقيمة *+${money(prize)}* 🪙.`);
       } else {
         save();
-        reply(`🎟️ للأسف تذكرتك لم تكن الرابحة هذه المرة. حظاً أوفر!`);
+        reply(`💨 الصندوق كان فارغاً للأسف! ضاعت رسوم الفتح (300 🪙).`);
       }
     } },
 
-  { name: 'بيع_ممتلكات', aliases: ['sell'], desc: 'بيع جزء من محتويات حقيبتك للسيولة',
-    async run({ u, args, reply }) {
-      const itemName = args[0];
-      if (!itemName || !u.inv[itemName] || u.inv[itemName] <= 0) {
-        return reply('❌ اذكر اسم الغرض الصحيح الموجود في حقيبتك لبيعه.\nمثال: /بيع صنارة');
+  { name: 'بئر_الأماني', aliases: ['wishwell'], desc: 'ارمي عملة في البئر واطلب أمنية',
+    async run({ u, reply }) {
+      const cost = 50;
+      if (u.money < cost) return reply('❌ رمي العملة في البئر يتطلب 50 🪙.');
+      u.money -= cost;
+      if (Math.random() > 0.5) {
+        const reward = 300; u.money += reward; save();
+        reply(`✨ استجيبت أمنيتك! ظهرت ومضة نور وأعطتك البئر مبلغ *+${money(reward)}* 🪙.`);
+      } else {
+        save();
+        reply(`💧 سمعت صوت ارتطام العملة بالماء، ولم يحدث شيء. ردد أمنيتك مرة أخرى لاحقاً!`);
       }
-      const itemPrice = ITEMS[itemName]?.price ? Math.floor(ITEMS[itemName].price * 0.6) : 100;
-      u.inv[itemName]--;
-      u.money += itemPrice; save();
-      reply(`💰 بعت عدد 1 من (${itemName}) وحصلت على *${money(itemPrice)}* 🪙 كاش.`);
     } },
 
-  { name: 'تحويل_بنكي', aliases: ['banktransfer'], desc: 'تحويل أموال مباشرة من حسابك البنكي',
-    async run({ u, sender, target, rest, reply }) {
-      if (!target) return reply('↩️ منشن الشخص. مثال: /تحويل_بنكي @user 500');
-      if (numOf(target) === numOf(sender)) return reply('😅 مينفعش تحوّل لنفسك.');
-      const n = amt(rest[0], u.bank);
-      if (!n) return reply('اكتب المبلغ.');
-      if (n > u.bank) return reply('❌ رصيد البنك مش كفاية.');
-      u.bank -= n; user(target).bank += n; save();
-      reply(`✅ تم تحويل ${money(n)} من حسابك البنكي إلى حساب @${numOf(target)}`, [target]);
-    } },
-
-  { name: 'وديعة', aliases: ['depositbox'], desc: 'وضع مبلغ كوديّ لحفظه بأرباح ثابتة',
-    async run({ u, args, reply }) {
-      const n = amt(args[0], u.money);
-      if (!n) return reply('اكتب المبلغ للإيداع الاستثماري الآمن.');
-      if (n > u.money) return reply('❌ محفظتك لا تحتوي على هذا المبلغ.');
-      u.money -= n; u.bank += Math.floor(n * 1.1); save();
-      reply(`🛡️ تم إيداع وتجميد مبلغ ${money(n)} بعائد فوري 10% وأضيف للبنك!`);
-    } },
-
-  { name: 'راتب_الشركات', aliases: ['company'], desc: 'استلم أرباح شركتك الافتراضية',
+  { name: 'دفتر_الديون', aliases: ['debts'], desc: 'عرض حالة الديون والقروض النشطة',
     async run({ u, reply }) {
-      const left = cooldown(u, 'company', 43200000); if (left) return wait(reply, left);
-      const profits = randInt(500, 1500);
-      u.bank += profits; save();
-      reply(`🏢 أرباح شركتك اليومية أضيفت للبنك بقيمة *+${money(profits)}* 🪙.`);
-    } },
-
-  { name: 'تبرع', aliases: ['donate'], desc: 'تبرع للأعضاء المحتاجين في السيرفر',
-    async run({ u, args, reply }) {
-      const n = amt(args[0], u.money);
-      if (!n) return reply('اكتب المبلغ للتبرع به.');
-      if (n > u.money) return reply('❌ لا تملك هذا المبلغ.');
-      u.money -= n; save();
-      reply(`❤️ جزاك الله خيراً! تبرعت بمبلغ *${money(n)}* 🪙 لخدمة أعضاء السيرفر والخير.`);
-    } },
-
-  { name: 'إحصائيات_مالية', aliases: ['mystats', 'ثروتي'], desc: 'تقرير شامل عن ثروتك وممتلكاتك',
-    async run({ u, reply }) {
-      const total = u.money + u.bank;
-      const invCount = Object.values(u.inv || {}).reduce((a, b) => a + b, 0);
-      reply(`📊 *التقرير المالي الشامل*\n\n👛 الكاش: ${money(u.money)}\n🏦 البنك: ${money(u.bank)}\n💎 الإجمالي الكلي: ${money(total)}\n🎒 عناصر الحقيبة: ${invCount} قطعة`);
-    } },
-
-  { name: 'تجميد_الرصيد', aliases: ['lock'], desc: 'حماية أموالك من السرقات المؤقتة',
-    async run({ u, reply }) {
-      reply(`🔒 رصيدك البنكي مؤمن بالكامل ضد محاولات السطو والسرقة العادية بفضل أنظمة الأمان.`);
-    } },
-
-  { name: 'تصنيف_الأثرياء', aliases: ['tier'], desc: 'عرف رتبتك الاقتصادية في السيرفر',
-    async run({ u, reply }) {
-      const total = u.money + u.bank;
-      let rank = 'مواطن فقير 🪙';
-      if (total > 50000) rank = 'ملياردير الأساطير 👑';
-      else if (total > 20000) rank = 'رجل أعمال مخضرم 💼';
-      else if (total > 5000) rank = 'تاجر متوسط 📦';
-      reply(`🏷️ رتبتك المالية الحالية:\n*${rank}* (إجمالي الثروة: ${money(total)})`);
+      reply(`📜 *سجل الديون والقروض*\n\n- القرض البنكي الحالي: *${money(u.loan || 0)}* 🪙\n- حالة السداد: ${u.loan ? 'مطلوب السداد' : 'لا توجد ديون نشطة ✔️'}`);
     } },
 
   // الأوامر الأصلية الخاصة بك:
